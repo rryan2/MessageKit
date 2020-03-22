@@ -60,7 +60,10 @@ internal extension MessagesViewController {
     @objc
     private func handleKeyboardDidChangeState(_ notification: Notification) {
         guard !isMessagesControllerBeingDismissed else { return }
-
+        while ((top?.presentedViewController) != nil) {
+            top = top?.presentedViewController;
+        }
+        print(top)
         guard let keyboardStartFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? CGRect else { return }
         guard !keyboardStartFrameInScreenCoords.isEmpty || UIDevice.current.userInterfaceIdiom != .pad else {
             // WORKAROUND for what seems to be a bug in iPad's keyboard handling in iOS 11: we receive an extra spurious frame change
@@ -68,7 +71,10 @@ internal extension MessagesViewController {
             // ignore this notification.
             return
         }
-
+        if self.presentedViewController?.isKind(of: UIAlertController.self) ?? false {
+            // This is important to skip notifications from child modal controllers in iOS >= 13.0
+            return
+        }
         guard self.presentedViewController == nil else {
             // This is important to skip notifications from child modal controllers in iOS >= 13.0
             return
