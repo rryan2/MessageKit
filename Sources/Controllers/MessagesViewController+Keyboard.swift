@@ -60,6 +60,7 @@ internal extension MessagesViewController {
     @objc
     private func handleKeyboardDidChangeState(_ notification: Notification) {
         guard !isMessagesControllerBeingDismissed else { return }
+        var top = UIApplication.shared.keyWindow?.rootViewController!
         while ((top?.presentedViewController) != nil) {
             top = top?.presentedViewController;
         }
