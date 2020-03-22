@@ -162,10 +162,9 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     private func setupDefaults() {
         extendedLayoutIncludesOpaqueBars = true
         automaticallyAdjustsScrollViewInsets = false
-        view.backgroundColor = .backgroundColor
+        view.backgroundColor = .white
         messagesCollectionView.keyboardDismissMode = .interactive
         messagesCollectionView.alwaysBounceVertical = true
-        messagesCollectionView.backgroundColor = .backgroundColor
     }
 
     private func setupDelegates() {
