@@ -57,18 +57,19 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     open var maintainPositionOnKeyboardFrameChanged: Bool = false
 
     open override var canBecomeFirstResponder: Bool {
-        var top = UIApplication.shared.keyWindow?.rootViewController!
-        while ((top?.presentedViewController) != nil) {
-            top = top?.presentedViewController;
-        }
-        if top?.isKind(of: UIAlertController.self) ?? false {
-                   // This is important to skip notifications from child modal controllers in iOS >= 13.0
-            return false
-        }
         return true
     }
 
     open override var inputAccessoryView: UIView? {
+        var top = UIApplication.shared.keyWindow?.rootViewController!
+        while ((top?.presentedViewController) != nil) {
+            top = top?.presentedViewController;
+        }
+        print(top)
+        if top?.isKind(of: UIAlertController.self) ?? false {
+                   // This is important to skip notifications from child modal controllers in iOS >= 13.0
+            return nil
+        }
         return messageInputBar
     }
 
