@@ -65,7 +65,6 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         while ((top?.presentedViewController) != nil) {
             top = top?.presentedViewController;
         }
-        print(top)
         if top?.isKind(of: UIAlertController.self) ?? false {
                    // This is important to skip notifications from child modal controllers in iOS >= 13.0
             return nil
