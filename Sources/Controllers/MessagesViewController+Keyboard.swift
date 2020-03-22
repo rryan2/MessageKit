@@ -61,19 +61,11 @@ internal extension MessagesViewController {
     private func handleKeyboardDidChangeState(_ notification: Notification) {
         guard !isMessagesControllerBeingDismissed else { return }
         var top = UIApplication.shared.keyWindow?.rootViewController!
-        while ((top?.presentedViewController) != nil) {
-            top = top?.presentedViewController;
-        }
-        print(top)
         guard let keyboardStartFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? CGRect else { return }
         guard !keyboardStartFrameInScreenCoords.isEmpty || UIDevice.current.userInterfaceIdiom != .pad else {
             // WORKAROUND for what seems to be a bug in iPad's keyboard handling in iOS 11: we receive an extra spurious frame change
             // notification when undocking the keyboard, with a zero starting frame and an incorrect end frame. The workaround is to
             // ignore this notification.
-            return
-        }
-        if top?.isKind(of: UIAlertController.self) ?? false {
-            // This is important to skip notifications from child modal controllers in iOS >= 13.0
             return
         }
         guard self.presentedViewController == nil else {
