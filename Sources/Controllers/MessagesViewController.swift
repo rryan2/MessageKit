@@ -68,10 +68,10 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         if top?.isKind(of: UIAlertController.self) ?? false {
                    // This is important to skip notifications from child modal controllers in iOS >= 13.0
             let a = top as! UIAlertController
-            if a.title!.hasPrefix("Only")||a.title!.hasPrefix("你最多"){
+            if a.title?.hasPrefix("Only") ?? false||a.title?.hasPrefix("你最多") ?? false{
                 return nil
             }
-            if a.message!.hasPrefix("Only")||a.message!.hasPrefix("你最多"){
+            if a.message?.hasPrefix("Only") ?? false||a.message?.hasPrefix("你最多") ?? false{
                 return nil
             }
         }
