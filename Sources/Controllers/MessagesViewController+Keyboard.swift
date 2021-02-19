@@ -50,9 +50,9 @@ internal extension MessagesViewController {
                 inputTextView === messageInputBar.inputTextView else { return }
 
             if scrollsToLastItemOnKeyboardBeginsEditing {
-                messagesCollectionView.scrollToLastItem()
+                self.messagesCollectionView.scrollToLastItem()
             } else {
-                messagesCollectionView.scrollToBottom(animated: true)
+                self.messagesCollectionView.scrollToBottom(animated: true)
             }
         }
     }
@@ -88,18 +88,18 @@ internal extension MessagesViewController {
         // to simply check whether the current keyboard frame, whatever it is (even when undocked), covers the bottom of the collection
         // view.
 
-        guard let keyboardEndFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        let keyboardEndFrame = view.convert(keyboardEndFrameInScreenCoords, from: view.window)
-
-        let newBottomInset = requiredScrollViewBottomInset(forKeyboardFrame: keyboardEndFrame)
-        let differenceOfBottomInset = newBottomInset - messageCollectionViewBottomInset
-
-        if maintainPositionOnKeyboardFrameChanged && differenceOfBottomInset != 0 {
-            let contentOffset = CGPoint(x: messagesCollectionView.contentOffset.x, y: messagesCollectionView.contentOffset.y + differenceOfBottomInset)
-            messagesCollectionView.setContentOffset(contentOffset, animated: false)
-        }
-
-        messageCollectionViewBottomInset = newBottomInset
+//        guard let keyboardEndFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+//        let keyboardEndFrame = view.convert(keyboardEndFrameInScreenCoords, from: view.window)
+//
+//        let newBottomInset = requiredScrollViewBottomInset(forKeyboardFrame: keyboardEndFrame)
+//        let differenceOfBottomInset = newBottomInset - messageCollectionViewBottomInset
+//
+//        if maintainPositionOnKeyboardFrameChanged && differenceOfBottomInset != 0 {
+//            let contentOffset = CGPoint(x: messagesCollectionView.contentOffset.x, y: messagesCollectionView.contentOffset.y + differenceOfBottomInset)
+//            messagesCollectionView.setContentOffset(contentOffset, animated: false)
+//        }
+//
+//        messageCollectionViewBottomInset = newBottomInset
     }
 
     // MARK: - Inset Computation

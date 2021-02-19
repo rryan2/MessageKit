@@ -1,18 +1,18 @@
 /*
  MIT License
-
+ 
  Copyright (c) 2017-2019 MessageKit
-
+ 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
-
+ 
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
-
+ 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,21 +28,21 @@ import InputBarAccessoryView
 /// A subclass of `UIViewController` with a `MessagesCollectionView` object
 /// that is used to display conversation interfaces.
 open class MessagesViewController: UIViewController,
-UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
-
+                                   UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
+    
     /// The `MessagesCollectionView` managed by the messages view controller object.
     open var messagesCollectionView = MessagesCollectionView()
-
+    
     /// The `InputBarAccessoryView` used as the `inputAccessoryView` in the view controller.
     open lazy var messageInputBar = InputBarAccessoryView()
-
+    
     /// A Boolean value that determines whether the `MessagesCollectionView` scrolls to the
     /// last item whenever the `InputTextView` begins editing.
     ///
     /// The default value of this property is `false`.
     /// NOTE: This is related to `scrollToLastItem` whereas the below flag is related to `scrollToBottom` - check each function for differences
     open var scrollsToLastItemOnKeyboardBeginsEditing: Bool = false
-
+    
     /// A Boolean value that determines whether the `MessagesCollectionView` scrolls to the
     /// bottom whenever the `InputTextView` begins editing.
     ///
@@ -55,33 +55,19 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     ///
     /// The default value of this property is `false`.
     open var maintainPositionOnKeyboardFrameChanged: Bool = false
-
+    
     open override var canBecomeFirstResponder: Bool {
         return true
     }
-
+    
     open override var inputAccessoryView: UIView? {
-        var top = UIApplication.shared.keyWindow?.rootViewController!
-        while ((top?.presentedViewController) != nil) {
-            top = top?.presentedViewController;
-        }
-        if top?.isKind(of: UIAlertController.self) ?? false {
-                   // This is important to skip notifications from child modal controllers in iOS >= 13.0
-            let a = top as! UIAlertController
-            if a.title?.hasPrefix("Only") ?? false||a.title?.hasPrefix("你最多") ?? false{
-                return nil
-            }
-            if a.message?.hasPrefix("Only") ?? false||a.message?.hasPrefix("你最多") ?? false{
-                return nil
-            }
-        }
-        return messageInputBar
+        return nil
     }
-
+    
     open override var shouldAutorotate: Bool {
         return false
     }
-
+    
     /// A CGFloat value that adds to (or, if negative, subtracts from) the automatically
     /// computed value of `messagesCollectionView.contentInset.bottom`. Meant to be used
     /// as a measure of last resort when the built-in algorithm does not produce the right
@@ -92,26 +78,26 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             messageCollectionViewBottomInset += delta
         }
     }
-
+    
     public var isTypingIndicatorHidden: Bool {
         return messagesCollectionView.isTypingIndicatorHidden
     }
-
+    
     public var selectedIndexPathForMenu: IndexPath?
-
+    
     private var isFirstLayout: Bool = true
     
     internal var isMessagesControllerBeingDismissed: Bool = false
-
+    
     internal var messageCollectionViewBottomInset: CGFloat = 0 {
         didSet {
             messagesCollectionView.contentInset.bottom = messageCollectionViewBottomInset
             messagesCollectionView.scrollIndicatorInsets.bottom = messageCollectionViewBottomInset
         }
     }
-
+    
     // MARK: - View Life Cycle
-
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         setupDefaults()
@@ -146,60 +132,65 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         }
         adjustScrollViewTopInset()
     }
-
+    
     open override func viewSafeAreaInsetsDidChange() {
         if #available(iOS 11.0, *) {
             super.viewSafeAreaInsetsDidChange()
         }
         messageCollectionViewBottomInset = requiredInitialScrollViewBottomInset()
     }
-
+    
     // MARK: - Initializers
-
+    
     deinit {
         removeKeyboardObservers()
         removeMenuControllerObservers()
         removeObservers()
         clearMemoryCache()
     }
-
+    
     // MARK: - Methods [Private]
-
+    
     private func setupDefaults() {
         extendedLayoutIncludesOpaqueBars = true
         automaticallyAdjustsScrollViewInsets = false
         view.backgroundColor = .white
-        messagesCollectionView.keyboardDismissMode = .interactive
+        messagesCollectionView.keyboardDismissMode = .none
         messagesCollectionView.alwaysBounceVertical = true
     }
-
+    
     private func setupDelegates() {
         messagesCollectionView.delegate = self
         messagesCollectionView.dataSource = self
     }
-
+    var keyboardManager = KeyboardManager()
     private func setupSubviews() {
         view.addSubview(messagesCollectionView)
+        view.addSubview(messageInputBar)
+        keyboardManager.bind(inputAccessoryView: messageInputBar)
     }
-
+    
     private func setupConstraints() {
         messagesCollectionView.translatesAutoresizingMaskIntoConstraints = false
         
         let top = messagesCollectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: topLayoutGuide.length)
-        let bottom = messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         if #available(iOS 11.0, *) {
             let leading = messagesCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
             let trailing = messagesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
-            NSLayoutConstraint.activate([top, bottom, trailing, leading])
+            NSLayoutConstraint.activate([top, trailing, leading])
         } else {
             let leading = messagesCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor)
             let trailing = messagesCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-            NSLayoutConstraint.activate([top, bottom, trailing, leading])
+            NSLayoutConstraint.activate([top, trailing, leading])
         }
+        
+        messageInputBar.translatesAutoresizingMaskIntoConstraints = false
+        
+        messagesCollectionView.bottomAnchor.constraint(equalTo: messageInputBar.topAnchor).isActive = true
     }
-
+    
     // MARK: - Typing Indicator API
-
+    
     /// Sets the typing indicator sate by inserting/deleting the `TypingBubbleCell`
     ///
     /// - Parameters:
@@ -210,27 +201,27 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     ///              when `animated` is `FALSE`
     ///   - completion: A completion block to execute after the insertion/deletion
     open func setTypingIndicatorViewHidden(_ isHidden: Bool, animated: Bool, whilePerforming updates: (() -> Void)? = nil, completion: ((Bool) -> Void)? = nil) {
-
+        
         guard isTypingIndicatorHidden != isHidden else {
             completion?(false)
             return
         }
-
+        
         let section = messagesCollectionView.numberOfSections
         messagesCollectionView.setTypingIndicatorViewHidden(isHidden)
-
+        
         if animated {
             messagesCollectionView.performBatchUpdates({ [weak self] in
                 self?.performUpdatesForTypingIndicatorVisability(at: section)
                 updates?()
-                }, completion: completion)
+            }, completion: completion)
         } else {
             performUpdatesForTypingIndicatorVisability(at: section)
             updates?()
             completion?(true)
         }
     }
-
+    
     /// Performs a delete or insert on the `MessagesCollectionView` on the provided section
     ///
     /// - Parameter section: The index to modify
@@ -241,7 +232,7 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             messagesCollectionView.insertSections([section])
         }
     }
-
+    
     /// A method that by default checks if the section is the last in the
     /// `messagesCollectionView` and that `isTypingIndicatorViewHidden`
     /// is FALSE
@@ -251,9 +242,9 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     public func isSectionReservedForTypingIndicator(_ section: Int) -> Bool {
         return !messagesCollectionView.isTypingIndicatorHidden && section == self.numberOfSections(in: messagesCollectionView) - 1
     }
-
+    
     // MARK: - UICollectionViewDataSource
-
+    
     open func numberOfSections(in collectionView: UICollectionView) -> Int {
         guard let collectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
@@ -261,7 +252,7 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         let sections = collectionView.messagesDataSource?.numberOfSections(in: collectionView) ?? 0
         return collectionView.isTypingIndicatorHidden ? sections : sections + 1
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         guard let collectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
@@ -271,7 +262,7 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         }
         return collectionView.messagesDataSource?.numberOfItems(inSection: section, in: collectionView) ?? 0
     }
-
+    
     /// Notes:
     /// - If you override this method, remember to call MessagesDataSource's customCell(for:at:in:)
     /// for MessageKind.custom messages, if necessary.
@@ -280,21 +271,21 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     /// reserved for it with `isSectionReservedForTypingIndicator` defined in
     /// `MessagesCollectionViewFlowLayout`
     open func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-
+        
         guard let messagesCollectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
         }
-
+        
         guard let messagesDataSource = messagesCollectionView.messagesDataSource else {
             fatalError(MessageKitError.nilMessagesDataSource)
         }
-
+        
         if isSectionReservedForTypingIndicator(indexPath.section) {
             return messagesDataSource.typingIndicator(at: indexPath, in: messagesCollectionView)
         }
-
+        
         let message = messagesDataSource.messageForItem(at: indexPath, in: messagesCollectionView)
-
+        
         switch message.kind {
         case .text, .attributedText, .emoji:
             let cell = messagesCollectionView.dequeueReusableCell(TextMessageCell.self, for: indexPath)
@@ -320,17 +311,17 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             return messagesDataSource.customCell(for: message, at: indexPath, in: messagesCollectionView)
         }
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-
+        
         guard let messagesCollectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
         }
-
+        
         guard let displayDelegate = messagesCollectionView.messagesDisplayDelegate else {
             fatalError(MessageKitError.nilMessagesDisplayDelegate)
         }
-
+        
         switch kind {
         case UICollectionView.elementKindSectionHeader:
             return displayDelegate.messageHeaderView(for: indexPath, in: messagesCollectionView)
@@ -340,16 +331,16 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             fatalError(MessageKitError.unrecognizedSectionKind)
         }
     }
-
+    
     // MARK: - UICollectionViewDelegateFlowLayout
-
+    
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         guard let messagesFlowLayout = collectionViewLayout as? MessagesCollectionViewFlowLayout else { return .zero }
         return messagesFlowLayout.sizeForItem(at: indexPath)
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-
+        
         guard let messagesCollectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
         }
@@ -361,12 +352,12 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         }
         return layoutDelegate.headerViewSize(for: section, in: messagesCollectionView)
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let cell = cell as? TypingIndicatorCell else { return }
         cell.typingBubble.startAnimating()
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
         guard let messagesCollectionView = collectionView as? MessagesCollectionView else {
             fatalError(MessageKitError.notMessagesCollectionView)
@@ -379,16 +370,16 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
         }
         return layoutDelegate.footerViewSize(for: section, in: messagesCollectionView)
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, shouldShowMenuForItemAt indexPath: IndexPath) -> Bool {
         guard let messagesDataSource = messagesCollectionView.messagesDataSource else { return false }
-
+        
         if isSectionReservedForTypingIndicator(indexPath.section) {
             return false
         }
-
+        
         let message = messagesDataSource.messageForItem(at: indexPath, in: messagesCollectionView)
-
+        
         switch message.kind {
         case .text, .attributedText, .emoji, .photo:
             selectedIndexPathForMenu = indexPath
@@ -397,21 +388,21 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             return false
         }
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
         if isSectionReservedForTypingIndicator(indexPath.section) {
             return false
         }
         return (action == NSSelectorFromString("copy:"))
     }
-
+    
     open func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
         guard let messagesDataSource = messagesCollectionView.messagesDataSource else {
             fatalError(MessageKitError.nilMessagesDataSource)
         }
         let pasteBoard = UIPasteboard.general
         let message = messagesDataSource.messageForItem(at: indexPath, in: messagesCollectionView)
-
+        
         switch message.kind {
         case .text(let text), .emoji(let text):
             pasteBoard.string = text
@@ -423,7 +414,7 @@ UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
             break
         }
     }
-
+    
     // MARK: - Helpers
     
     private func addObservers() {
